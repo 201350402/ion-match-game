@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ion Match Starter</title>
+<style>
+  :root{
+    --ink:#1f2a37; --muted:#5b6675; --bg:#f4f7fb; --card:#ffffff; --line:#d5dde8;
+    --teal:#3f6f63; --head:#dce8f6; --red:#c0392b; --good:#2e8b57; --goodbg:#e8f6ee;
+    --bad:#d35445; --badbg:#fdecea; --accent:#e85a5a; --accentbg:#fff4f4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:#fff;border-bottom:1px solid var(--line);padding:16px;text-align:center}
+  h1{margin:0;color:var(--red);font-size:1.8rem;letter-spacing:.5px}
+  .sub{color:var(--muted);margin-top:6px;font-size:1.05rem}
+  main{max-width:1000px;margin:0 auto;padding:16px}
+
+  .tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+  .tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 16px;font:inherit;cursor:pointer;color:var(--muted)}
+  .tab.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+  .bank-label{font-size:.9rem;color:var(--muted);margin:0 0 6px 4px}
+  .bank{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;min-height:96px;padding:14px;border:2px dashed var(--line);border-radius:14px;background:#fff}
+  .bank.target{border-color:var(--accent);background:var(--accentbg)}
+  .bank:empty::after{content:"All cards placed — press Check!";color:var(--muted)}
+
+  .chip{font-size:2rem;font-weight:700;color:var(--teal);background:#fff;border:2px solid var(--line);border-radius:12px;
+        padding:6px 18px;min-width:104px;text-align:center;cursor:grab;user-select:none;-webkit-user-select:none;
+        touch-action:manipulation;transition:transform .12s, box-shadow .12s, border-color .12s}
+  .chip:hover{transform:translateY(-2px)}
+  .chip:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+  .chip.selected{border-color:var(--accent);box-shadow:0 0 0 4px rgba(232,90,90,.22);transform:translateY(-2px)}
+  .chip.right{border-color:var(--good);background:var(--goodbg)}
+  .chip.wrong{border-color:var(--bad);background:var(--badbg);animation:shake .35s}
+  .chip sub,.chip sup{font-size:.6em}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+  .zones{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  @media (max-width:720px){.zones{grid-template-columns:1fr}.chip{font-size:1.7rem}}
+  .zone{background:#fff;border:1px solid #9aa6b4;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer}
+  .zone:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+  .zone .label{background:var(--head);padding:10px 14px;font-weight:700;font-size:1.1rem}
+  .zone .desc{padding:10px 14px;font-size:1.05rem;line-height:1.4;border-top:1px solid #9aa6b4}
+  .zone .name{display:none;padding:0 14px 8px;color:var(--good);font-weight:700}
+  .zone.revealed .name{display:block}
+  .zone .drop{flex:1;min-height:110px;margin:0 10px 10px;border:2px dashed var(--line);border-radius:10px;
+              display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:8px}
+  .zone.target .drop,.zone.over .drop{border-color:var(--accent);background:var(--accentbg)}
+
+  .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .btn{font:inherit;font-weight:600;border-radius:10px;padding:10px 20px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+  .btn:hover{filter:brightness(.96)}
+
+  .feedback{margin:16px auto 0;max-width:700px;text-align:center;font-size:1.1rem;min-height:1.6em}
+  .feedback.good{color:var(--good);font-weight:700}
+  .hints{max-width:700px;margin:8px auto 0;padding:0;list-style:none}
+  .hints li{background:#fff;border-left:4px solid var(--bad);border-radius:8px;padding:8px 12px;margin-top:8px}
+  .hints li b{color:var(--teal)}
+  .how{color:var(--muted);text-align:center;font-size:.9rem;margin-top:22px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Starter</h1>
+  <div class="sub">Match a description for each formula. A first guess is welcome.</div>
+</header>
+
+<main>
+  <div class="tabs" id="tabs"></div>
+
+  <p class="bank-label">Formula cards</p>
+  <div class="bank" id="bank" tabindex="0" aria-label="Card bank"></div>
+
+  <div class="zones" id="zones"></div>
+
+  <div class="actions">
+    <button class="btn primary" id="check">Check answers</button>
+    <button class="btn" id="reset">Reset</button>
+    <button class="btn" id="next" hidden>Next challenge →</button>
+  </div>
+
+  <div class="feedback" id="feedback" aria-live="polite"></div>
+  <ul class="hints" id="hints"></ul>
+
+  <p class="how">Drag a card into a box, or tap a card and then tap a box.</p>
+</main>
+
+<script>
+const ZONES = [
+  {key:"A", desc:"One atom<br>with a charge", name:"Monatomic ion"},
+  {key:"B", desc:"Several bonded atoms<br>with an overall charge", name:"Polyatomic ion"},
+  {key:"C", desc:"A molecule with<br>no overall charge", name:"Neutral molecule"}
+];
+
+const ROUNDS = [
+  { title:"Starter",
+    cards:[
+      {id:"no3", html:"NO<sub>3</sub><sup>−</sup>", label:"N O 3 minus", zone:"B",
+       hint:"Count the atoms: one N and three O. That is more than one atom, and there is a charge."},
+      {id:"h2o", html:"H<sub>2</sub>O", label:"H 2 O", zone:"C",
+       hint:"Look for a + or − sign. Without one, the particle has no overall charge."},
+      {id:"na",  html:"Na<sup>+</sup>", label:"N a plus", zone:"A",
+       hint:"How many atoms are in this formula? Just one sodium atom, with a charge."}
+    ]},
+  { title:"Al Ain label challenge",
+    cards:[
+      {id:"ca",   html:"Ca<sup>2+</sup>", label:"C a 2 plus", zone:"A",
+       hint:"Only one calcium atom here, and it carries a 2+ charge."},
+      {id:"cl",   html:"Cl<sup>−</sup>", label:"C l minus", zone:"A",
+       hint:"Chloride is a single chlorine atom with a charge."},
+      {id:"so4",  html:"SO<sub>4</sub><sup>2−</sup>", label:"S O 4 2 minus", zone:"B",
+       hint:"Sulfate has one S and four O atoms bonded together, with a 2− charge."},
+      {id:"hco3", html:"HCO<sub>3</sub><sup>−</sup>", label:"H C O 3 minus", zone:"B",
+       hint:"Hydrogen carbonate has H, C and three O atoms, plus a charge."},
+      {id:"co2",  html:"CO<sub>2</sub>", label:"C O 2", zone:"C",
+       hint:"Three bonded atoms, but no + or − sign."},
+      {id:"o2",   html:"O<sub>2</sub>", label:"O 2", zone:"C",
+       hint:"Two bonded oxygen atoms and no charge."}
+    ]}
+];
+
+let roundIdx = 0, place = {}, marks = {}, selected = null, order = [];
+const $ = id => document.getElementById(id);
+const bank = $("bank"), zonesEl = $("zones"), feedback = $("feedback"), hints = $("hints");
+const zoneEls = {};
+
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function buildTabs(){
+  const tabs = $("tabs"); tabs.innerHTML = "";
+  ROUNDS.forEach((r,i)=>{
+    const b = document.createElement("button");
+    b.className = "tab" + (i===roundIdx ? " active" : "");
+    b.textContent = r.title;
+    b.onclick = () => startRound(i);
+    tabs.appendChild(b);
+  });
+}
+
+function buildZones(){
+  zonesEl.innerHTML = "";
+  ZONES.forEach(z=>{
+    const el = document.createElement("div");
+    el.className = "zone"; el.tabIndex = 0;
+    el.setAttribute("aria-label", "Box " + z.key + ": " + z.desc.replace("<br>"," "));
+    el.innerHTML = `<div class="label">${z.key}</div><div class="desc">${z.desc}</div><div class="name">${z.name}</div><div class="drop"></div>`;
+    el.drop = el.querySelector(".drop");
+    el.onclick = () => { if(selected) moveTo(selected, z.key); };
+    el.onkeydown = e => { if((e.key==="Enter"||e.key===" ") && selected){ e.preventDefault(); moveTo(selected, z.key); } };
+    el.ondragover = e => { e.preventDefault(); el.classList.add("over"); };
+    el.ondragleave = () => el.classList.remove("over");
+    el.ondrop = e => { e.preventDefault(); el.classList.remove("over"); const id = e.dataTransfer.getData("text/plain"); if(id) moveTo(id, z.key); };
+    zoneEls[z.key] = el;
+    zonesEl.appendChild(el);
+  });
+}
+
+bank.onclick = () => { if(selected && place[selected]) moveTo(selected, null); };
+bank.onkeydown = e => { if((e.key==="Enter"||e.key===" ") && selected){ e.preventDefault(); moveTo(selected, null); } };
+bank.ondragover = e => e.preventDefault();
+bank.ondrop = e => { e.preventDefault(); const id = e.dataTransfer.getData("text/plain"); if(id) moveTo(id, null); };
+
+function moveTo(id, zoneKey){
+  place[id] = zoneKey;
+  delete marks[id];
+  selected = null;
+  feedback.textContent = ""; feedback.className = "feedback"; hints.innerHTML = "";
+  Object.values(zoneEls).forEach(z=>z.classList.remove("revealed"));
+  $("next").hidden = true;
+  render();
+}
+
+function render(){
+  const cards = ROUNDS[roundIdx].cards;
+  bank.innerHTML = "";
+  Object.values(zoneEls).forEach(z => z.drop.innerHTML = "");
+  order.forEach(id=>{
+    const c = cards.find(x=>x.id===id);
+    const el = document.createElement("div");
+    el.className = "chip" + (selected===c.id ? " selected" : "") + (marks[c.id] ? " " + marks[c.id] : "");
+    el.innerHTML = c.html;
+    el.draggable = true;
+    el.tabIndex = 0;
+    el.setAttribute("role","button");
+    el.setAttribute("aria-label", c.label);
+    el.onclick = e => { e.stopPropagation(); selected = (selected===c.id) ? null : c.id; render(); };
+    el.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); e.stopPropagation(); el.click(); } };
+    el.ondragstart = e => { e.dataTransfer.setData("text/plain", c.id); e.dataTransfer.effectAllowed = "move"; };
+    (place[c.id] ? zoneEls[place[c.id]].drop : bank).appendChild(el);
+  });
+  const targeting = !!selected;
+  Object.values(zoneEls).forEach(z => z.classList.toggle("target", targeting));
+  bank.classList.toggle("target", targeting && !!place[selected]);
+}
+
+function check(){
+  const cards = ROUNDS[roundIdx].cards;
+  hints.innerHTML = "";
+  if(cards.some(c => !place[c.id])){
+    feedback.className = "feedback";
+    feedback.textContent = "Place every card first — a guess is fine!";
+    return;
+  }
+  let right = 0;
+  cards.forEach(c=>{
+    if(place[c.id] === c.zone){ marks[c.id] = "right"; right++; }
+    else {
+      marks[c.id] = "wrong";
+      const li = document.createElement("li");
+      li.innerHTML = `<b>${c.html}</b> — ${c.hint}`;
+      hints.appendChild(li);
+    }
+  });
+  selected = null;
+  render();
+  if(right === cards.length){
+    feedback.className = "feedback good";
+    feedback.textContent = "All matched! 🎉 Notice the names that appeared under each box.";
+    Object.values(zoneEls).forEach(z=>z.classList.add("revealed"));
+    $("next").hidden = roundIdx >= ROUNDS.length - 1;
+  } else {
+    feedback.className = "feedback";
+    feedback.textContent = `${right} of ${cards.length} correct. Use the hints and move the red cards.`;
+  }
+}
+
+function startRound(i){
+  roundIdx = i; place = {}; marks = {}; selected = null;
+  order = shuffle(ROUNDS[i].cards.map(c=>c.id));
+  feedback.textContent = ""; feedback.className = "feedback"; hints.innerHTML = "";
+  Object.values(zoneEls).forEach(z=>z.classList.remove("revealed"));
+  $("next").hidden = true;
+  buildTabs(); render();
+}
+
+$("check").onclick = check;
+$("reset").onclick = () => startRound(roundIdx);
+$("next").onclick = () => startRound(Math.min(roundIdx+1, ROUNDS.length-1));
+
+buildZones();
+startRound(0);
+</script>
+</body>
+</html>
