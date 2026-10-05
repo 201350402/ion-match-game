@@ -17,9 +17,6 @@
   .sub{color:var(--muted);margin-top:6px;font-size:1.05rem}
   main{max-width:1000px;margin:0 auto;padding:16px}
 
-  .tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
-  .tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 16px;font:inherit;cursor:pointer;color:var(--muted)}
-  .tab.active{background:var(--teal);color:#fff;border-color:var(--teal)}
 
   .bank-label{font-size:.9rem;color:var(--muted);margin:0 0 6px 4px}
   .bank{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;min-height:96px;padding:14px;border:2px dashed var(--line);border-radius:14px;background:#fff}
@@ -69,8 +66,6 @@
 </header>
 
 <main>
-  <div class="tabs" id="tabs"></div>
-
   <p class="bank-label">Formula cards</p>
   <div class="bank" id="bank" tabindex="0" aria-label="Card bank"></div>
 
@@ -79,7 +74,6 @@
   <div class="actions">
     <button class="btn primary" id="check">Check answers</button>
     <button class="btn" id="reset">Reset</button>
-    <button class="btn" id="next" hidden>Next challenge →</button>
   </div>
 
   <div class="feedback" id="feedback" aria-live="polite"></div>
@@ -104,21 +98,6 @@ const ROUNDS = [
        hint:"Look for a + or − sign. Without one, the particle has no overall charge."},
       {id:"na",  html:"Na<sup>+</sup>", label:"N a plus", zone:"A",
        hint:"How many atoms are in this formula? Just one sodium atom, with a charge."}
-    ]},
-  { title:"Al Ain label challenge",
-    cards:[
-      {id:"ca",   html:"Ca<sup>2+</sup>", label:"C a 2 plus", zone:"A",
-       hint:"Only one calcium atom here, and it carries a 2+ charge."},
-      {id:"cl",   html:"Cl<sup>−</sup>", label:"C l minus", zone:"A",
-       hint:"Chloride is a single chlorine atom with a charge."},
-      {id:"so4",  html:"SO<sub>4</sub><sup>2−</sup>", label:"S O 4 2 minus", zone:"B",
-       hint:"Sulfate has one S and four O atoms bonded together, with a 2− charge."},
-      {id:"hco3", html:"HCO<sub>3</sub><sup>−</sup>", label:"H C O 3 minus", zone:"B",
-       hint:"Hydrogen carbonate has H, C and three O atoms, plus a charge."},
-      {id:"co2",  html:"CO<sub>2</sub>", label:"C O 2", zone:"C",
-       hint:"Three bonded atoms, but no + or − sign."},
-      {id:"o2",   html:"O<sub>2</sub>", label:"O 2", zone:"C",
-       hint:"Two bonded oxygen atoms and no charge."}
     ]}
 ];
 
@@ -128,17 +107,6 @@ const bank = $("bank"), zonesEl = $("zones"), feedback = $("feedback"), hints = 
 const zoneEls = {};
 
 function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-
-function buildTabs(){
-  const tabs = $("tabs"); tabs.innerHTML = "";
-  ROUNDS.forEach((r,i)=>{
-    const b = document.createElement("button");
-    b.className = "tab" + (i===roundIdx ? " active" : "");
-    b.textContent = r.title;
-    b.onclick = () => startRound(i);
-    tabs.appendChild(b);
-  });
-}
 
 function buildZones(){
   zonesEl.innerHTML = "";
@@ -169,7 +137,6 @@ function moveTo(id, zoneKey){
   selected = null;
   feedback.textContent = ""; feedback.className = "feedback"; hints.innerHTML = "";
   Object.values(zoneEls).forEach(z=>z.classList.remove("revealed"));
-  $("next").hidden = true;
   render();
 }
 
@@ -220,7 +187,6 @@ function check(){
     feedback.className = "feedback good";
     feedback.textContent = "All matched! 🎉 Notice the names that appeared under each box.";
     Object.values(zoneEls).forEach(z=>z.classList.add("revealed"));
-    $("next").hidden = roundIdx >= ROUNDS.length - 1;
   } else {
     feedback.className = "feedback";
     feedback.textContent = `${right} of ${cards.length} correct. Use the hints and move the red cards.`;
@@ -232,13 +198,11 @@ function startRound(i){
   order = shuffle(ROUNDS[i].cards.map(c=>c.id));
   feedback.textContent = ""; feedback.className = "feedback"; hints.innerHTML = "";
   Object.values(zoneEls).forEach(z=>z.classList.remove("revealed"));
-  $("next").hidden = true;
-  buildTabs(); render();
+  render();
 }
 
 $("check").onclick = check;
 $("reset").onclick = () => startRound(roundIdx);
-$("next").onclick = () => startRound(Math.min(roundIdx+1, ROUNDS.length-1));
 
 buildZones();
 startRound(0);
